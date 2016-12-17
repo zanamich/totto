@@ -6,6 +6,14 @@ class FormGenerator
   @result_forms = []
 
   def self.perform
+    @bankers = { 0 => '1',
+                 3 => 'X',
+                 4 => '1',
+                 7 => '2',
+                 8 => '2',
+                 10 => 'X',
+                 13 => '1'
+    }
     form_structure = create_history_csv
     create_permutations form_structure, [], 0, %w(0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
     puts 'done'
@@ -52,16 +60,16 @@ class FormGenerator
     return unless validate_instances(form, form_structure)
 
     form[index] = '1'
-    puts form.inspect
-    create_permutations form_structure, bankers, index + 1, form if index < 15
+    puts 'A: ' + form.inspect
+    create_permutations form_structure, bankers, index + 1, form.dup if index < 15
 
     form[index] = 'X'
-    puts form.inspect
-    create_permutations form_structure, bankers, index + 1, form if index < 15
+    puts 'B: ' +  form.inspect
+    create_permutations form_structure, bankers, index + 1, form.dup if index < 15
 
     form[index] = '2'
-    puts form.inspect
-    create_permutations form_structure, bankers, index + 1, form if index < 15
+    puts 'C: ' +  form.inspect
+    create_permutations form_structure, bankers, index + 1, form.dup if index < 15
 
   end
 
@@ -74,12 +82,21 @@ class FormGenerator
       num_of_guesses += 1 if %w(1 X 2).include?(guess)
     end
 
-    return false if counts['1'] > form_structure[0]
-    return false if counts['X'] > form_structure[1]
-    return false if counts['2'] > form_structure[2]
+    if counts['1'] > form_structure[0] || counts['X'] > form_structure[1] || counts['2'] > form_structure[2]
+      puts 'FORM STRUCTURE CONFLICT'
+      return false
+    end
+
     return false if num_of_guesses > 16
 
-    @result_forms << form if num_of_guesses == 16
+    @bankers.each do |index, value|
+      if form[index] != value && form[index] != '0'
+        puts 'BANKER CONFLICT'
+        return false
+      end
+    end
+
+    @result_forms << form.dup if num_of_guesses == 16
 
     true
   end
